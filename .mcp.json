@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "gateway": {
+      "type": "http",
+      "url": "https://project-claude-code-5znn0rxntj.gateway.bedrock-agentcore.us-west-2.amazonaws.com/mcp",
+      "headers": {
+        "Authorization": "Bearer ${GATEWAY_BEARER}"
+      }
+    }
+  }
+}
