@@ -1,66 +1,30 @@
-# `.claude/` — DevOps pipeline agents + skills
+# dev-claude pipeline — target repo configuration
 
-This directory wires the repository into an automated GitHub-issue-to-PR pipeline. It is **generic**: the same `.claude/` tree can be dropped into any repository and the pipeline will work without edits. Nothing inside references a specific language or framework.
+This directory configures the `dev-claude` autonomous agent that turns a
+well-specified GitHub issue into a pull request. See
+`dev-claude-v1-proposal.md` in the orchestrator repo for the full design.
 
-## What's here
+## Pipeline (5 subagents, spawned by Claude Code on a `claude -p` run)
 
-```
-.claude/
-├── agents/
-│   ├── explorer.md       ← phase 1: understand the issue
-│   ├── implementer.md    ← phase 2: write the code
-│   ├── reviewer.md       ← phase 3: critique the diff
-│   └── pr-opener.md      ← phase 4: commit + push + open PR
-└── skills/
-    ├── explore/SKILL.md
-    ├── implement/SKILL.md
-    ├── review/SKILL.md
-    └── pr/SKILL.md
-```
+1. `explore-agent`   → writes `./.dev-claude/explore.md`
+2. `qa-agent`        → writes `./.dev-claude/questions.md` (halts if ambiguous)
+3. `implement-agent` → creates `feat/issue-{N}`, commits implementation
+4. `critique-agent`  → writes `./.dev-claude/critique.md`
+5. `implement-agent` (second pass) → applies critique
+6. `pr-agent`        → pushes branch, opens PR, sets `state:pr-created`
 
-Each **agent** runs in its own Claude context window with a specific tool allowlist; the linked **skill** (via `skills:` frontmatter) is injected on entry. This keeps phases isolated — the implementer never sees the exploration noise, the reviewer never sees the implementation reasoning, etc.
+Stages are skipped when their artifact already exists (artifact-based resume).
+Artifact directory `./.dev-claude/` is gitignored.
 
-## How the pipeline invokes them
+## MCP
 
-The orchestrator (`lambda_temp.py` → full version in `stages/06-lambda-orchestrator.md`) runs these commands inside the AgentCore Runtime session:
+`.mcp.json` points Claude Code at the AgentCore Gateway. The Gateway exposes
+`GitHub___*` tools which Claude Code addresses as `mcp__gateway__GitHub___*`.
+Bearer token is injected by Lambda at invoke time via `${GATEWAY_BEARER}`.
 
-```bash
-cd /mnt/workspace/repo && claude -p "<issue>" --agent explorer    --max-turns 8  --output-format json
-cd /mnt/workspace/repo && claude -p "<issue+exploration>"  --agent implementer --max-turns 25
-cd /mnt/workspace/repo && claude -p "Review the uncommitted diff." --agent reviewer    --max-turns 5  --output-format json
-cd /mnt/workspace/repo && claude -p "Branch name hint: agent/issue-<N>. Base: main." --agent pr-opener --max-turns 10
-```
+## Labels (set by subagents via MCP, never by humans)
 
-## Filesystem contract
+- `stage:exploring` / `stage:implementing`
+- `state:awaiting-input` / `state:pr-created` / `state:failed`
 
-```
-/mnt/workspace/
-├── repo/                 ← this repository (cloned by Lambda)
-├── clarify.md            ← written by an agent when it needs user input (pipeline pauses)
-└── artifacts/
-    ├── exploring.json
-    ├── implementing.json
-    ├── reviewing.json
-    └── creating-pr.json
-```
-
-**Code changes land only under `repo/`.** Everything else — questions for the user, structured skill outputs — lives alongside it so the eventual PR diff stays clean.
-
-The pipeline pauses if any phase writes `/mnt/workspace/clarify.md`. The Status Agent posts those questions as a comment on the GitHub issue, moves the project board back to Todo, and waits. When the user answers and moves the board back to In Progress, the pipeline resumes from `paused_at_stage`.
-
-## Prerequisites for the container
-
-- `claude` CLI installed (via `claude.ai/install.sh`).
-- `git` available.
-- `gh` CLI available, authenticated with a token that can push to the repo and open PRs (via `GITHUB_TOKEN` env or a credential helper).
-- `/mnt/workspace` mounted as AgentCore Persistent Filesystems.
-
-## Reuse in another repo
-
-Copy `.claude/` as-is. The agents and skills only reference paths under `/mnt/workspace/` (absolute) and relative paths inside the repo (`README*`, `package.json`, …) that are discovered dynamically. No language-specific assumptions.
-
-## Extending
-
-- **Tune the skills** for this repo by adding a `CLAUDE.md` at the repo root — agents pick it up automatically and it augments without overriding the skill body.
-- **Change a tool allowlist**: edit the `tools:` frontmatter field on the matching agent file.
-- **Add a phase**: create a new agent + skill pair and wire it into `flow.md` / the orchestrator.
+Invariant: always `set_labels` (replace-all), never `add_labels`.
