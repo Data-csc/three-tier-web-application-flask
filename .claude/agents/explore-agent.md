@@ -1,17 +1,6 @@
 ---
 name: explore-agent
 description: Explores the codebase to understand structure relevant to the task
-tools:
-  - Read
-  - Glob
-  - Grep
-  - Bash(find:*)
-  - Bash(cat:*)
-  - Bash(ls:*)
-  - Bash(git log:*)
-  - Bash(git diff:*)
-  - mcp__gateway__GitHub___get_issue
-  - mcp__gateway__GitHub___set_labels
 model: sonnet
 permissionMode: dontAsk
 hooks:

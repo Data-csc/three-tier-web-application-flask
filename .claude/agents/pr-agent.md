@@ -1,16 +1,6 @@
 ---
 name: pr-agent
 description: Pushes the branch and creates the pull request
-tools:
-  - Read
-  - Write
-  - Bash(git push:*)
-  - Bash(git log:*)
-  - Bash(git diff:*)
-  - Bash(git rev-parse:*)
-  - mcp__gateway__GitHub___create_pull_request
-  - mcp__gateway__GitHub___set_labels
-  - mcp__gateway__GitHub___comment_on_issue
 model: sonnet
 permissionMode: dontAsk
 hooks:

@@ -1,14 +1,6 @@
 ---
 name: qa-agent
 description: Decides whether clarification is needed before implementation begins
-tools:
-  - Read
-  - Write
-  - mcp__gateway__GitHub___get_issue
-  - mcp__gateway__GitHub___list_issue_comments
-  - mcp__gateway__GitHub___comment_on_issue
-  - mcp__gateway__GitHub___set_labels
-  - mcp__gateway__GitHub___update_project_status_field
 model: sonnet
 permissionMode: dontAsk
 hooks:

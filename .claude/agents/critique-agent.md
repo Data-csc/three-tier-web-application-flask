@@ -1,15 +1,6 @@
 ---
 name: critique-agent
 description: Reviews the implementation critically before the re-implementation pass
-tools:
-  - Read
-  - Glob
-  - Grep
-  - Bash(git diff:*)
-  - Bash(git log:*)
-  - Bash(pytest:*)
-  - Bash(python3:*)
-  - mcp__gateway__GitHub___get_issue
 model: opus
 permissionMode: dontAsk
 hooks:

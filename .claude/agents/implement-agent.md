@@ -1,25 +1,6 @@
 ---
 name: implement-agent
 description: Implements the feature or applies critique fixes
-tools:
-  - Read
-  - Write
-  - Edit
-  - MultiEdit
-  - Glob
-  - Grep
-  - Bash(git checkout:*)
-  - Bash(git add:*)
-  - Bash(git commit:*)
-  - Bash(git diff:*)
-  - Bash(git log:*)
-  - Bash(git status:*)
-  - Bash(find:*)
-  - Bash(python3:*)
-  - Bash(pytest:*)
-  - Bash(pip:*)
-  - mcp__gateway__GitHub___get_issue
-  - mcp__gateway__GitHub___set_labels
 model: opus
 permissionMode: dontAsk
 hooks:
