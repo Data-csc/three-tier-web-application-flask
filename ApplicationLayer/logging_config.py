@@ -10,7 +10,7 @@ class JSONFormatter(logging.Formatter):
 
     def format(self, record):
         log_data = {
-            'timestamp': datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z'),
+            'timestamp': datetime.fromtimestamp(record.created, tz=timezone.utc).isoformat().replace('+00:00', 'Z'),
             'level': record.levelname,
             'logger': record.name,
             'message': record.getMessage()
@@ -39,13 +39,8 @@ def configure_logging(app):
     handler = logging.StreamHandler(sys.stdout)
     handler.setFormatter(JSONFormatter())
 
-    # Configure the root logger
-    root_logger = logging.getLogger()
-    root_logger.setLevel(logging.INFO)
-    root_logger.addHandler(handler)
-
-    # Configure Flask's app logger
-    app.logger.setLevel(logging.INFO)
-    app.logger.handlers.clear()
-    app.logger.addHandler(handler)
-    app.logger.propagate = False
+    # Configure only the 'app' logger namespace (not root logger)
+    app_logger = logging.getLogger('app')
+    app_logger.setLevel(logging.INFO)
+    app_logger.addHandler(handler)
+    app_logger.propagate = False

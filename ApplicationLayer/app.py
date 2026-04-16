@@ -49,7 +49,7 @@ def display():
         response.headers.add('Access-Control-Allow-Origin', '*')
         return response
     todos = TodoTable.query.all()
-    logger.info("Display route completed", extra={'todo_count': len(todos)})
+    logger.info("Display route completed")
     return jsonify(create_object(todos))
 
 @app.route("/create", methods =['POST'])
@@ -65,7 +65,7 @@ def create():
             todo = TodoTable(task=task_text)
             db.session.add(todo)
             db.session.commit()
-            logger.info("Create route completed", extra={'task': task_text})
+            logger.info("Create route completed")
             return redirect("/", 302)
     except:
         logger.error("Create route failed", exc_info=True)
@@ -85,7 +85,7 @@ def update():
             todo.task = request.form.get("task")
 
             db.session.commit()
-            logger.info("Update route completed", extra={'task_id': task_id})
+            logger.info("Update route completed")
             return redirect("/", 302)
     except:
         logger.error("Update route failed", exc_info=True)
@@ -93,7 +93,7 @@ def update():
 
 @app.route("/complete/<task_id>", methods=["POST"])
 def complete(task_id):
-    logger.info("Complete route entry", extra={'task_id': task_id})
+    logger.info("Complete route entry")
     @after_this_request
     def add_header(response):
         response.headers.add('Access-Control-Allow-Origin', '*')
@@ -102,7 +102,7 @@ def complete(task_id):
         todo = TodoTable.query.get(task_id)
         db.session.delete(todo)
         db.session.commit()
-        logger.info("Complete route completed", extra={'task_id': task_id})
+        logger.info("Complete route completed")
         return redirect("/", 302)
     except:
         logger.error("Complete route failed", exc_info=True)
