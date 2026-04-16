@@ -63,11 +63,21 @@ class RateLimiter:
         Returns:
             int: Seconds to wait before retrying (ceiling value)
         """
+        now = time.time()
+
         with self.lock:
             if key not in self.buckets:
                 return 0
 
             bucket = self.buckets[key]
+
+            elapsed = now - bucket['last_refill']
+            bucket['tokens'] = min(
+                self.burst,
+                bucket['tokens'] + elapsed * self.rate_per_second
+            )
+            bucket['last_refill'] = now
+
             tokens_needed = 1.0 - bucket['tokens']
 
             if tokens_needed <= 0:

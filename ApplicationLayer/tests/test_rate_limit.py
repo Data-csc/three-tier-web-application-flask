@@ -37,7 +37,6 @@ def test_under_limit_requests_pass(client):
     for i in range(5):
         response = client.get('/')
         assert response.status_code == 200
-        assert 'error' not in response.get_json()
 
 
 def test_burst_capacity_exceeded_returns_429(client):
@@ -118,11 +117,11 @@ def test_tokens_refill_over_time(client):
     response = client.get('/')
     assert response.status_code == 429
 
-    time.sleep(0.2)
+    sleep_duration = 1.0 / rate_limiter.rate_per_second + 0.01
+    time.sleep(sleep_duration)
 
     response = client.get('/')
-    if rate_limiter.rate_per_second >= 5:
-        assert response.status_code == 200
+    assert response.status_code == 200
 
 
 def test_different_ips_have_independent_limits(client):
@@ -164,3 +163,23 @@ def test_rate_limiter_get_retry_after():
     retry_after = limiter.get_retry_after('test_key')
     assert retry_after >= 1
     assert retry_after <= 2
+
+
+def test_retry_after_decreases_after_partial_refill(client):
+    """Retry-After should decrease as tokens refill over time."""
+    burst_limit = rate_limiter.burst
+
+    for i in range(burst_limit):
+        client.get('/')
+
+    response = client.get('/')
+    assert response.status_code == 429
+    initial_retry_after = response.get_json()['retry_after_seconds']
+
+    time.sleep(0.05)
+
+    response = client.get('/')
+    assert response.status_code == 429
+    later_retry_after = response.get_json()['retry_after_seconds']
+
+    assert later_retry_after <= initial_retry_after

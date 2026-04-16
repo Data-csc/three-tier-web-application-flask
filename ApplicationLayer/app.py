@@ -41,6 +41,9 @@ def check_rate_limit():
         return None
 
     client_ip = request.remote_addr
+    if client_ip is None:
+        client_ip = 'unknown'
+
     if not rate_limiter.allow(client_ip):
         retry_after = rate_limiter.get_retry_after(client_ip)
         response = jsonify({
