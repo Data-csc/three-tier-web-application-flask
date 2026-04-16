@@ -93,6 +93,20 @@ def complete(task_id):
         return redirect("/", 404)
     
 
+@app.route('/echo', methods=['POST'])
+def echo():
+    @after_this_request
+    def add_header(response):
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        return response
+    try:
+        data = request.get_json(force=False)
+        if data is None or 'message' not in data:
+            return jsonify({"error": "bad_request"}), 400
+        return jsonify({"echo": data['message']}), 200
+    except:
+        return jsonify({"error": "bad_request"}), 400
+
 @app.route('/health')
 def index():
     return make_response("Successful health check for ALB!", 200)
