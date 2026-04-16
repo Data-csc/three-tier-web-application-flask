@@ -1,0 +1,13 @@
+{
+  "issue": {
+    "number": 13,
+    "title": "Status Endpoint",
+    "body": "Add a GET /status endpoint to ApplicationLayer/app.py that returns plain text OK with HTTP 200 and Content-Type text/plain. No database access, no auth. Add a unit test in ApplicationLayer/tests/test_status.py asserting body equals OK and status is 200. Acceptance: curl /status returns OK.\n\n",
+    "state": "open",
+    "labels": [
+      "agent:start"
+    ],
+    "url": "https://github.com/Data-csc/three-tier-web-application-flask/issues/13"
+  },
+  "comments": []
+}
