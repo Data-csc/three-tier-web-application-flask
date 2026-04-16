@@ -58,8 +58,18 @@ has returned a PR URL AND the label is "state:pr-created".
      head: feat/issue-{number}
      base: main
      draft: false
-     body: ## What (one paragraph) / ## Why (Closes #{number}) / ## Testing (how to verify)
-   If this call fails, retry once. If it still fails, jump to the error exit.
+     body: plain markdown with ## What (one paragraph) / ## Why (Closes #{number}) / ## Testing (how to verify)
+
+   CRITICAL — the `body` must be plain markdown as a JSON string. Do NOT use:
+     - shell substitution like $(...) or `$(cat <<EOF ... EOF)`
+     - heredoc syntax (<<EOF, <<'EOF')
+     - command chaining with && or ;
+     - backticks around code are OK, but NEVER "$(" followed by anything
+   WAF blocks these patterns with HTML 403. If you see "Streamable HTTP error: 403
+   Forbidden", simplify the body: strip backticks around path names, shorten it,
+   remove code blocks, and retry.
+
+   If this call fails twice, jump to the error exit.
 10. Call mcp__gateway__GitHub___set_labels with labels: ["state:pr-created"].
     (Do NOT use any other label name here. "stage:ready-for-pr" is NOT valid.)
 11. Post a comment on the issue summarizing what was built + PR link via

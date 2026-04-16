@@ -39,6 +39,13 @@ STEP 3: Call mcp__gateway__GitHub___create_pull_request:
     ## Testing
     How to verify the change works.
 
+  CRITICAL — the `body` field is a plain markdown string. Do NOT use:
+    - shell substitution like $(...) or $(cat <<EOF ... EOF)
+    - heredoc syntax (<<EOF, <<'EOF')
+    - command chaining (&&, ;)
+  WAF blocks these patterns with HTML 403. If you see that, simplify the body
+  (strip backticks around paths, remove code fences, shorten) and retry.
+
 STEP 4: Call mcp__gateway__GitHub___set_labels with `labels: ["state:pr-created"]`
 
 On push/PR failure: retry once. On second failure, call mcp__gateway__GitHub___set_labels
