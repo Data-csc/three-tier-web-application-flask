@@ -1,9 +1,9 @@
 name: dev-claude on agent:start
 
-# GitHub Actions doesn't support the `projects_v2_item` event. To trigger the
-# pipeline, add the label `agent:start` to an issue (the human equivalent of
-# dragging the card to "In Progress"). Lambda moves the project card to
-# In Progress via MCP once it begins processing.
+# Add the label `agent:start` to an issue to trigger the pipeline.
+# The issue must already be added to the org project (PVT_kwDOBS4dts4BUiYO).
+# Lambda resolves project_item_id via MCP (GitHub App has org-project access
+# that the workflow's GITHUB_TOKEN does not).
 
 on:
   issues:
@@ -36,36 +36,20 @@ jobs:
                     comments(first: 100) {
                       nodes { id body createdAt author { login } }
                     }
-                    projectItems(first: 5) {
-                      nodes {
-                        id
-                        project { id title }
-                      }
-                    }
                   }
                 }
               }' \
             -F id="$ISSUE_NODE_ID" > issue.json
 
-          # Pick the project item id for our org project (PVT_kwDOBS4dts4BUiYO).
-          PROJECT_ITEM_ID=$(jq -r '.data.node.projectItems.nodes[]
-            | select(.project.id == "PVT_kwDOBS4dts4BUiYO") | .id' issue.json | head -1)
-
-          if [ -z "$PROJECT_ITEM_ID" ] || [ "$PROJECT_ITEM_ID" = "null" ]; then
-            echo "::error::Issue is not on project PVT_kwDOBS4dts4BUiYO. Add it to the project first."
-            exit 1
-          fi
-
-          jq --arg item_id "$PROJECT_ITEM_ID" '{
-            repo_owner:      .data.node.repository.owner.login,
-            repo_name:       .data.node.repository.name,
-            repo_url:        .data.node.repository.url,
-            issue_number:    .data.node.number,
-            issue_title:     .data.node.title,
-            issue_body:      .data.node.body,
-            issue_author:    .data.node.author.login,
-            issue_comments:  .data.node.comments.nodes,
-            project_item_id: $item_id
+          jq '{
+            repo_owner:     .data.node.repository.owner.login,
+            repo_name:      .data.node.repository.name,
+            repo_url:       .data.node.repository.url,
+            issue_number:   .data.node.number,
+            issue_title:    .data.node.title,
+            issue_body:     .data.node.body,
+            issue_author:   .data.node.author.login,
+            issue_comments: .data.node.comments.nodes
           }' issue.json > payload.json
 
           cat payload.json
