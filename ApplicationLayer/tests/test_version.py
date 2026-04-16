@@ -1,6 +1,4 @@
 import json
-import os
-from unittest.mock import patch
 
 
 def test_version_returns_200(client):
@@ -21,16 +19,15 @@ def test_version_static_value(client):
     assert data['version'] == '1.0.0'
 
 
-def test_version_commit_default(client):
-    with patch.dict(os.environ, {}, clear=True):
-        os.environ.pop('GIT_COMMIT', None)
-        response = client.get('/version')
-        data = json.loads(response.data)
-        assert data['commit'] == 'unknown'
+def test_version_commit_default(client, monkeypatch):
+    monkeypatch.delenv('GIT_COMMIT', raising=False)
+    response = client.get('/version')
+    data = json.loads(response.data)
+    assert data['commit'] == 'unknown'
 
 
-def test_version_commit_from_env(client):
-    with patch.dict(os.environ, {'GIT_COMMIT': 'abc123'}):
-        response = client.get('/version')
-        data = json.loads(response.data)
-        assert data['commit'] == 'abc123'
+def test_version_commit_from_env(client, monkeypatch):
+    monkeypatch.setenv('GIT_COMMIT', 'abc123')
+    response = client.get('/version')
+    data = json.loads(response.data)
+    assert data['commit'] == 'abc123'
