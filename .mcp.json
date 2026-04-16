@@ -4,7 +4,8 @@
       "type": "http",
       "url": "https://project-claude-code-5znn0rxntj.gateway.bedrock-agentcore.us-west-2.amazonaws.com/mcp",
       "headers": {
-        "Authorization": "Bearer ${GATEWAY_BEARER}"
+        "Authorization": "Bearer ${GATEWAY_BEARER}",
+        "X-Amzn-Bedrock-AgentCore-Runtime-Session-Id": "${X-Amzn-Bedrock-AgentCore-Runtime-Session-Id}"
       }
     }
   }
