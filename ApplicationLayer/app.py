@@ -3,7 +3,12 @@ from flask_sqlalchemy import SQLAlchemy
 from parameters import master_username, db_password, endpoint, db_instance_name
 import requests, json
 import uuid
+import logging
+from logging_config import configure_logging
+
 app = Flask(__name__)
+configure_logging(app)
+logger = logging.getLogger(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql+mysqlconnector://{master_username}:{db_password}@{endpoint}/{db_instance_name}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -38,47 +43,57 @@ def create_object(results):
 
 @app.route('/', methods=['GET'])
 def display():
+    logger.info("Display route entry")
     @after_this_request
     def add_header(response):
         response.headers.add('Access-Control-Allow-Origin', '*')
         return response
     todos = TodoTable.query.all()
+    logger.info("Display route completed", extra={'todo_count': len(todos)})
     return jsonify(create_object(todos))
 
 @app.route("/create", methods =['POST'])
 def create():
+    logger.info("Create route entry")
     @after_this_request
     def add_header(response):
         response.headers.add('Access-Control-Allow-Origin', '*')
         return response
     try:
         if request.method == "POST":
-            todo = TodoTable(task=request.form.get("task"))
+            task_text = request.form.get("task")
+            todo = TodoTable(task=task_text)
             db.session.add(todo)
             db.session.commit()
-
+            logger.info("Create route completed", extra={'task': task_text})
             return redirect("/", 302)
     except:
+        logger.error("Create route failed", exc_info=True)
         return redirect("/", 404)
 
 @app.route("/update", methods =['POST'])
 def update():
+    logger.info("Update route entry")
     @after_this_request
     def add_header(response):
         response.headers.add('Access-Control-Allow-Origin', '*')
         return response
     try:
         if request.method == "POST":
-            todo = TodoTable.query.get(request.form.get("task_id"))
+            task_id = request.form.get("task_id")
+            todo = TodoTable.query.get(task_id)
             todo.task = request.form.get("task")
 
             db.session.commit()
+            logger.info("Update route completed", extra={'task_id': task_id})
             return redirect("/", 302)
     except:
+        logger.error("Update route failed", exc_info=True)
         return redirect("/", 404)
 
 @app.route("/complete/<task_id>", methods=["POST"])
 def complete(task_id):
+    logger.info("Complete route entry", extra={'task_id': task_id})
     @after_this_request
     def add_header(response):
         response.headers.add('Access-Control-Allow-Origin', '*')
@@ -87,9 +102,10 @@ def complete(task_id):
         todo = TodoTable.query.get(task_id)
         db.session.delete(todo)
         db.session.commit()
-        
+        logger.info("Complete route completed", extra={'task_id': task_id})
         return redirect("/", 302)
     except:
+        logger.error("Complete route failed", exc_info=True)
         return redirect("/", 404)
     
 
