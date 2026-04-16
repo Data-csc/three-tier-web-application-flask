@@ -60,13 +60,11 @@ jobs:
           role-to-assume: ${{ secrets.LAMBDA_INVOKE_ROLE_ARN }}
           aws-region: us-west-2
 
-      - name: Invoke dev-claude Lambda (async)
+      - name: Start dev-claude state machine
         env:
-          LAMBDA_NAME: ${{ secrets.DEV_CLAUDE_LAMBDA_NAME }}
+          STATE_MACHINE_ARN: ${{ secrets.DEV_CLAUDE_STATE_MACHINE_ARN }}
         run: |
-          aws lambda invoke \
-            --function-name "$LAMBDA_NAME" \
-            --invocation-type Event \
-            --cli-binary-format raw-in-base64-out \
-            --payload fileb://payload.json \
-            /dev/null
+          aws stepfunctions start-execution \
+            --state-machine-arn "$STATE_MACHINE_ARN" \
+            --name "issue-${{ github.event.issue.number }}-$(date +%s)" \
+            --input file://payload.json
