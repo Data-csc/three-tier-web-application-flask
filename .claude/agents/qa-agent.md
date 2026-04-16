@@ -8,8 +8,8 @@ hooks:
     - command: "./.claude/hooks/subagent-stop.sh qa"
 ---
 
-1. Read ./.dev-claude/project.json and ./.dev-claude/explore.md.
-2. Call mcp__gateway__GitHub___get_issue and mcp__gateway__GitHub___list_issue_comments — read the full spec and prior discussion.
+1. Read ./.dev-claude/project.json, ./.dev-claude/explore.md, and ./.dev-claude/issue.json.
+2. issue.json contains the full issue spec and comments (pre-fetched by Lambda — do NOT call get_issue or list_issue_comments via MCP).
 
 IF the spec is clear enough to implement without guessing:
   Write ./.dev-claude/questions.md containing only:
