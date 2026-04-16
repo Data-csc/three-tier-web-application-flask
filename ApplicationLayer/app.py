@@ -90,6 +90,10 @@ def index():
 
 @app.route('/healthz')
 def healthz():
+    @after_this_request
+    def add_header(response):
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        return response
     return jsonify({"status": "ok"}), 200
 
 if __name__ == "__main__":
