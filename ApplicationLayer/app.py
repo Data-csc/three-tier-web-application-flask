@@ -1,7 +1,8 @@
-from flask import Flask, make_response, request, jsonify, after_this_request, render_template, redirect
+from flask import Flask, make_response, request, jsonify, after_this_request, render_template, redirect, g
 from flask_sqlalchemy import SQLAlchemy
 from parameters import master_username, db_password, endpoint, db_instance_name
 import requests, json
+import uuid
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql+mysqlconnector://{master_username}:{db_password}@{endpoint}/{db_instance_name}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -22,6 +23,15 @@ class TodoTable(db.Model):
 
 with app.app_context():
     db.create_all()
+
+@app.before_request
+def set_request_id():
+    g.request_id = request.headers.get('X-Request-ID') or str(uuid.uuid4())
+
+@app.after_request
+def add_request_id_header(response):
+    response.headers['X-Request-ID'] = g.request_id
+    return response
 
 def create_object(results):
     return {result.id: result.task for result in results}
