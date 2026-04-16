@@ -20,8 +20,6 @@ IF there are genuine ambiguities that would cause wrong implementation:
   1. Write ./.dev-claude/questions.md with numbered questions (no ANSWERED marker)
   2. Post a single comment via mcp__gateway__GitHub___comment_on_issue listing all questions clearly
   3. Call mcp__gateway__GitHub___set_labels with `labels: ["state:awaiting-input"]`
-  4. Call mcp__gateway__GitHub___update_project_status_field to move the card to Todo
-     (use project_id, project_item_id, status_field_id, todo_option_id from project.json)
-  5. Exit — do not continue to implement-agent
+  4. Exit — do not continue to implement-agent
 
 The orchestrator skips this agent if questions.md already has the ANSWERED marker.
