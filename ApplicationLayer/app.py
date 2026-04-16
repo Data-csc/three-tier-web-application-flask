@@ -3,6 +3,10 @@ from flask_sqlalchemy import SQLAlchemy
 from parameters import master_username, db_password, endpoint, db_instance_name
 import requests, json
 import uuid
+import time
+
+_start_time = time.time()
+
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql+mysqlconnector://{master_username}:{db_password}@{endpoint}/{db_instance_name}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -96,6 +100,11 @@ def complete(task_id):
 @app.route('/health')
 def index():
     return make_response("Successful health check for ALB!", 200)
+
+@app.route('/uptime')
+def uptime():
+    uptime_seconds = int(time.time() - _start_time)
+    return jsonify({"uptime_seconds": uptime_seconds})
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=4000, debug=False)
