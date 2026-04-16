@@ -1,0 +1,72 @@
+name: dev-claude on in-progress
+
+on:
+  projects_v2_item:
+    types: [edited]
+
+permissions:
+  id-token: write
+  contents: read
+  issues: read
+
+jobs:
+  trigger:
+    if: >-
+      github.event.changes.field_value.field_name == 'Status' &&
+      github.event.changes.field_value.to.name == 'In Progress'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve issue via GraphQL
+        id: resolve
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_ID: ${{ github.event.projects_v2_item.content_node_id }}
+          ITEM_ID: ${{ github.event.projects_v2_item.node_id }}
+        run: |
+          set -euo pipefail
+          gh api graphql \
+            -f query='
+              query($id: ID!) {
+                node(id: $id) {
+                  ... on Issue {
+                    number title body
+                    author { login }
+                    repository { name owner { login } url }
+                    comments(first: 100) {
+                      nodes { id body createdAt author { login } }
+                    }
+                  }
+                }
+              }' \
+            -F id="$NODE_ID" > issue.json
+
+          jq --arg item_id "$ITEM_ID" '{
+            repo_owner:      .data.node.repository.owner.login,
+            repo_name:       .data.node.repository.name,
+            repo_url:        .data.node.repository.url,
+            issue_number:    .data.node.number,
+            issue_title:     .data.node.title,
+            issue_body:      .data.node.body,
+            issue_author:    .data.node.author.login,
+            issue_comments:  .data.node.comments.nodes,
+            project_item_id: $item_id
+          }' issue.json > payload.json
+
+          cat payload.json
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.LAMBDA_INVOKE_ROLE_ARN }}
+          aws-region: us-west-2
+
+      - name: Invoke dev-claude Lambda (async)
+        env:
+          LAMBDA_NAME: ${{ secrets.DEV_CLAUDE_LAMBDA_NAME }}
+        run: |
+          aws lambda invoke \
+            --function-name "$LAMBDA_NAME" \
+            --invocation-type Event \
+            --cli-binary-format raw-in-base64-out \
+            --payload fileb://payload.json \
+            /dev/null
