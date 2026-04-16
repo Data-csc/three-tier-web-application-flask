@@ -1,11 +1,17 @@
 from flask import Flask, make_response, request, jsonify, after_this_request, render_template, redirect, g
 from flask_sqlalchemy import SQLAlchemy
 from parameters import master_username, db_password, endpoint, db_instance_name
+from rate_limit import RateLimiter
 import requests, json
 import uuid
+import os
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql+mysqlconnector://{master_username}:{db_password}@{endpoint}/{db_instance_name}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+rate_limit_per_second = float(os.getenv('RATE_LIMIT_PER_SECOND', '10'))
+rate_limit_burst = int(os.getenv('RATE_LIMIT_BURST', '20'))
+rate_limiter = RateLimiter(rate_limit_per_second, rate_limit_burst)
 
 db = SQLAlchemy(app)
 
@@ -27,6 +33,23 @@ with app.app_context():
 @app.before_request
 def set_request_id():
     g.request_id = request.headers.get('X-Request-ID') or str(uuid.uuid4())
+
+@app.before_request
+def check_rate_limit():
+    exempt_paths = ['/health', '/alive']
+    if request.path in exempt_paths:
+        return None
+
+    client_ip = request.remote_addr
+    if not rate_limiter.allow(client_ip):
+        retry_after = rate_limiter.get_retry_after(client_ip)
+        response = jsonify({
+            'error': 'rate_limited',
+            'retry_after_seconds': retry_after
+        })
+        response.status_code = 429
+        response.headers['Retry-After'] = str(retry_after)
+        return response
 
 @app.after_request
 def add_request_id_header(response):
