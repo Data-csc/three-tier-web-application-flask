@@ -25,6 +25,14 @@ Write ./.dev-claude/critique.md:
 - If NO issues worth fixing: write exactly "LGTM: no changes needed"
 - If issues exist: numbered, specific, actionable list with file and line references
 
+CRITICAL — formatting rules for the critique body:
+- Refer to findings as "Finding N", NOT "Issue #N" or "#N".
+- NEVER write a bare "#N" (e.g. `#2`, `#7`) anywhere in the body — GitHub
+  auto-links these to unrelated issue numbers in the repo and makes the
+  critique unreadable. Use "Finding N", "item N", or "(see above)" instead.
+- Use plain numbered headings like `### Finding 3: Race condition` rather
+  than `### 3.` followed by prose that later says `Issue #3`.
+
 After writing critique.md, post its content as a comment on the issue via
 mcp__gateway__GitHub___comment_on_issue (use owner, repo, issue_number from project.json).
 Prefix the comment with `### 🔎 Critique Report\n\n`.
