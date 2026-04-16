@@ -57,7 +57,7 @@ jobs:
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.LAMBDA_INVOKE_ROLE_ARN }}
+          role-to-assume: ${{ secrets.SFN_EXECUTE_ROLE_ARN }}
           aws-region: us-west-2
 
       - name: Start dev-claude state machine
