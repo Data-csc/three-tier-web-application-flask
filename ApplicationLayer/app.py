@@ -3,6 +3,8 @@ from flask_sqlalchemy import SQLAlchemy
 from parameters import master_username, db_password, endpoint, db_instance_name
 import requests, json
 import uuid
+import time
+from metrics import emit_latency
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql+mysqlconnector://{master_username}:{db_password}@{endpoint}/{db_instance_name}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -28,9 +30,33 @@ with app.app_context():
 def set_request_id():
     g.request_id = request.headers.get('X-Request-ID') or str(uuid.uuid4())
 
+@app.before_request
+def start_request_timer():
+    g.request_start = time.perf_counter()
+
 @app.after_request
 def add_request_id_header(response):
     response.headers['X-Request-ID'] = g.request_id
+    return response
+
+@app.after_request
+def emit_request_metrics(response):
+    if request.path == '/health':
+        return response
+
+    if hasattr(g, 'request_start'):
+        elapsed = time.perf_counter() - g.request_start
+        duration_ms = elapsed * 1000
+
+        route = request.url_rule.rule if request.url_rule else "UNKNOWN"
+
+        emit_latency(
+            route=route,
+            method=request.method,
+            status_code=response.status_code,
+            duration_ms=duration_ms
+        )
+
     return response
 
 def create_object(results):
