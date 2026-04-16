@@ -1,3 +1,4 @@
+import os
 from flask import Flask, make_response, request, jsonify, after_this_request, render_template, redirect
 from flask_sqlalchemy import SQLAlchemy
 from parameters import master_username, db_password, endpoint, db_instance_name
@@ -86,6 +87,11 @@ def complete(task_id):
 @app.route('/health')
 def index():
     return make_response("Successful health check for ALB!", 200)
+
+
+@app.route('/version')
+def version():
+    return jsonify(version='1.0.0', commit=os.getenv('GIT_COMMIT', 'unknown'))
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=4000, debug=False)
