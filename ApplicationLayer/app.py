@@ -97,5 +97,11 @@ def complete(task_id):
 def index():
     return make_response("Successful health check for ALB!", 200)
 
+@app.route('/ready')
+def ready():
+    response = make_response("ready", 200)
+    response.headers['Content-Type'] = 'text/plain'
+    return response
+
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=4000, debug=False)
